@@ -100,6 +100,7 @@ function Console({ onOut }: { onOut: () => void }) {
                 </div>
                 <div className="flex gap-1">
                   <Badge variant={m.subscribed ? "default" : "secondary"}>{m.subscribed ? "مشترك" : "غير مشترك"}</Badge>
+                  {!m.subscribed && m.activationRequestedAt && <Badge variant="outline">طلب تفعيل · {fmt(m.activationRequestedAt)}</Badge>}
                   {m.restricted && <Badge variant="destructive">مقيّد</Badge>}
                 </div>
               </div>
