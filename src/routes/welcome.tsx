@@ -2,8 +2,8 @@ import { useEffect, useRef, useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import {
-  ArrowLeft, ArrowRight, Check, CreditCard, ExternalLink, Eye, ImagePlus, Loader2,
-  Package, PartyPopper, Rocket, ShieldCheck, Store, Truck,
+  ArrowLeft, ArrowRight, Check, CreditCard, Eye, ImagePlus, Loader2,
+  Package, PartyPopper, Rocket, ShieldCheck, ShoppingBag, Store, Truck,
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -59,7 +59,6 @@ function WelcomePage() {
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
-  const [tried, setTried] = useState(false);
   const [activation, setActivation] = useState<ActivationStatus | null>(null);
   const loadActivation = useServerFn(getActivationStatus);
   const sendActivation = useServerFn(requestActivation);
@@ -226,58 +225,19 @@ function WelcomePage() {
 
           {step === 3 && (
             <section>
-              <h1 className="text-xl font-extrabold">جرّب متجرك بنفسك</h1>
+              <h1 className="text-xl font-extrabold">هكذا سيبدو متجرك</h1>
               <p className="mt-1 text-sm text-muted-foreground">
-                شاهد متجرك تمامًا كما سيراه عملاؤك، وجرّب كل شيء بحرية. لن تدفع أي شيء الآن.
+                معاينة بمنتجات وطلب تجريبي لتوضيح كيف يعمل متجرك. لن تدفع أي شيء الآن.
               </p>
 
-              <div className="mt-6 rounded-2xl border border-border bg-card p-5 shadow-card">
-                <div className="flex items-center gap-4">
-                  <span className="grid h-14 w-14 shrink-0 place-items-center overflow-hidden rounded-2xl bg-primary/10 text-primary">
-                    {logoUrl ? <img src={logoUrl} alt="" className="h-full w-full object-cover" /> : <Store className="h-7 w-7" />}
-                  </span>
-                  <div className="min-w-0">
-                    <p className="truncate text-base font-bold">{name || "متجرك"}</p>
-                    <p className="mt-0.5 inline-flex items-center gap-1.5 rounded-full bg-dashboard-amber-soft px-2 py-0.5 text-[11px] font-semibold text-dashboard-amber">
-                      <Eye className="h-3 w-3" /> وضع المعاينة
-                    </p>
-                  </div>
-                </div>
-                {publicUrl ? (
-                  <Button asChild size="lg" className="mt-5 w-full">
-                    <a href={publicUrl} target="_blank" rel="noreferrer" onClick={() => setTried(true)}>
-                      افتح متجرك وجرّبه <ExternalLink className="mr-1 h-4 w-4" />
-                    </a>
-                  </Button>
-                ) : (
-                  <p className="mt-5 rounded-xl bg-muted/50 p-3 text-center text-xs text-muted-foreground">
-                    يتم تجهيز رابط متجرك… ارجع خطوة واحفظ هوية متجرك أولًا.
-                  </p>
-                )}
-              </div>
-
-              <p className="mt-6 text-sm font-bold">جرّب هذه الأشياء:</p>
-              <ul className="mt-3 space-y-2">
-                {[
-                  "تصفّح منتجاتك وتأكد من الصور والأسعار",
-                  "تحدّث مع المساعد كأنك عميل واسأله عن منتج",
-                  "جرّب خطوات الطلب حتى النهاية",
-                ].map((t) => (
-                  <li key={t} className="flex items-start gap-3 rounded-xl border border-border bg-card p-3 text-sm">
-                    <span className="mt-0.5 grid h-5 w-5 shrink-0 place-items-center rounded-full bg-dashboard-green-soft text-dashboard-green">
-                      <Check className="h-3 w-3" />
-                    </span>
-                    {t}
-                  </li>
-                ))}
-              </ul>
+              <DemoStore name={name} logoUrl={logoUrl} />
 
               <p className="mt-5 flex items-center gap-2 text-xs text-muted-foreground">
                 <ShieldCheck className="h-4 w-4 shrink-0 text-dashboard-green" />
-                خذ وقتك. يمكنك تعديل أي شيء ثم العودة للتجربة مرة أخرى.
+                المنتجات والطلب هنا للتوضيح فقط، ولن تظهر لعملائك.
               </p>
 
-              <StepNav onBack={() => setStep(2)} onNext={() => setStep(4)} nextLabel={tried ? "انتهيت من التجربة" : "متابعة"} />
+              <StepNav onBack={() => setStep(2)} onNext={() => setStep(4)} nextLabel="انتهيت من المعاينة" />
             </section>
           )}
 
@@ -308,7 +268,7 @@ function WelcomePage() {
                       <span className="text-sm text-muted-foreground"><span className="text-2xl font-extrabold text-foreground">299</span> ج</span>
                     </div>
                     <ul className="mt-4 space-y-2 text-sm">
-                      {["استقبال الطلبات من عملائك", "مساعد يرد على عملائك تلقائيًا", "إدارة المنتجات والشحن والدفع"].map((t) => (
+                      {["استقبال الطلبات من عملائك", "متابعة الطلبات وحالتها أولًا بأول", "إدارة المنتجات والشحن والدفع"].map((t) => (
                         <li key={t} className="flex items-center gap-2">
                           <Check className="h-4 w-4 shrink-0 text-dashboard-green" /> {t}
                         </li>
@@ -395,6 +355,75 @@ function StepNav({ onBack, onNext, busy, nextLabel }: { onBack: () => void; onNe
       <Button size="lg" onClick={onNext} disabled={busy} className="px-8">
         {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <>{nextLabel} <Check className="mr-1 h-4 w-4" /></>}
       </Button>
+    </div>
+  );
+}
+
+const DEMO_PRODUCTS = [
+  { name: "تيشيرت قطن", price: 250, tone: "bg-dashboard-blue-soft text-dashboard-blue" },
+  { name: "حقيبة يد", price: 480, tone: "bg-dashboard-rose-soft text-dashboard-rose" },
+  { name: "كوب سيراميك", price: 120, tone: "bg-dashboard-amber-soft text-dashboard-amber" },
+  { name: "شنطة ظهر", price: 390, tone: "bg-dashboard-green-soft text-dashboard-green" },
+];
+
+const ORDER_STAGES = ["جديد", "قيد التجهيز", "تم الشحن", "تم التسليم"];
+
+function DemoStore({ name, logoUrl }: { name: string; logoUrl: string }) {
+  return (
+    <div className="mt-6 space-y-4">
+      {/* Storefront */}
+      <div className="overflow-hidden rounded-2xl border border-border bg-card shadow-card">
+        <div className="flex items-center gap-3 border-b border-border p-4">
+          <span className="grid h-11 w-11 shrink-0 place-items-center overflow-hidden rounded-xl bg-primary/10 text-primary">
+            {logoUrl ? <img src={logoUrl} alt="" className="h-full w-full object-cover" /> : <Store className="h-5 w-5" />}
+          </span>
+          <p className="min-w-0 flex-1 truncate font-bold">{name || "متجرك"}</p>
+          <span className="inline-flex items-center gap-1 rounded-full bg-dashboard-amber-soft px-2 py-0.5 text-[11px] font-semibold text-dashboard-amber">
+            <Eye className="h-3 w-3" /> معاينة
+          </span>
+        </div>
+        <div className="grid grid-cols-2 gap-3 p-4">
+          {DEMO_PRODUCTS.map((p) => (
+            <div key={p.name} className="rounded-xl border border-border p-2">
+              <div className={`grid aspect-square place-items-center rounded-lg ${p.tone}`}>
+                <Package className="h-8 w-8" />
+              </div>
+              <p className="mt-2 truncate text-sm font-semibold">{p.name}</p>
+              <div className="mt-1 flex items-center justify-between">
+                <span className="text-sm font-bold">{p.price} ج</span>
+                <span className="rounded-md bg-primary px-2 py-0.5 text-[11px] font-bold text-primary-foreground">اطلب</span>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Sample order */}
+      <div className="rounded-2xl border border-border bg-card p-4 shadow-card">
+        <div className="flex items-center justify-between">
+          <p className="flex items-center gap-2 text-sm font-bold">
+            <ShoppingBag className="h-4 w-4 text-primary" /> طلب جديد #1024
+          </p>
+          <span className="rounded-full bg-muted px-2 py-0.5 text-[10px] text-muted-foreground">طلب تجريبي</span>
+        </div>
+        <div className="mt-3 space-y-1.5 text-sm">
+          <div className="flex justify-between"><span className="text-muted-foreground">العميل</span><span>أحمد محمد · القاهرة</span></div>
+          <div className="flex justify-between"><span className="text-muted-foreground">المنتجات</span><span>تيشيرت قطن × 2</span></div>
+          <div className="flex justify-between"><span className="text-muted-foreground">الشحن</span><span>50 ج</span></div>
+          <div className="flex justify-between border-t border-border pt-1.5 font-bold"><span>الإجمالي</span><span>550 ج</span></div>
+        </div>
+        <div className="mt-4 grid grid-cols-4 gap-1.5 text-center text-[10px]">
+          {ORDER_STAGES.map((s, i) => (
+            <div key={s}>
+              <span className={`block h-1.5 rounded-full ${i <= 1 ? "bg-dashboard-green" : "bg-muted"}`} />
+              <span className={`mt-1 block ${i <= 1 ? "font-semibold text-foreground" : "text-muted-foreground"}`}>{s}</span>
+            </div>
+          ))}
+        </div>
+        <p className="mt-3 text-xs leading-relaxed text-muted-foreground">
+          عندما يطلب عميل من متجرك يصلك الطلب هكذا في لوحة التحكم، وتحدّث حالته حتى التسليم.
+        </p>
+      </div>
     </div>
   );
 }
