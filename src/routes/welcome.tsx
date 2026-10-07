@@ -226,58 +226,19 @@ function WelcomePage() {
 
           {step === 3 && (
             <section>
-              <h1 className="text-xl font-extrabold">جرّب متجرك بنفسك</h1>
+              <h1 className="text-xl font-extrabold">هكذا سيبدو متجرك</h1>
               <p className="mt-1 text-sm text-muted-foreground">
-                شاهد متجرك تمامًا كما سيراه عملاؤك، وجرّب كل شيء بحرية. لن تدفع أي شيء الآن.
+                معاينة بمنتجات وطلب تجريبي لتوضيح كيف يعمل متجرك. لن تدفع أي شيء الآن.
               </p>
 
-              <div className="mt-6 rounded-2xl border border-border bg-card p-5 shadow-card">
-                <div className="flex items-center gap-4">
-                  <span className="grid h-14 w-14 shrink-0 place-items-center overflow-hidden rounded-2xl bg-primary/10 text-primary">
-                    {logoUrl ? <img src={logoUrl} alt="" className="h-full w-full object-cover" /> : <Store className="h-7 w-7" />}
-                  </span>
-                  <div className="min-w-0">
-                    <p className="truncate text-base font-bold">{name || "متجرك"}</p>
-                    <p className="mt-0.5 inline-flex items-center gap-1.5 rounded-full bg-dashboard-amber-soft px-2 py-0.5 text-[11px] font-semibold text-dashboard-amber">
-                      <Eye className="h-3 w-3" /> وضع المعاينة
-                    </p>
-                  </div>
-                </div>
-                {publicUrl ? (
-                  <Button asChild size="lg" className="mt-5 w-full">
-                    <a href={publicUrl} target="_blank" rel="noreferrer" onClick={() => setTried(true)}>
-                      افتح متجرك وجرّبه <ExternalLink className="mr-1 h-4 w-4" />
-                    </a>
-                  </Button>
-                ) : (
-                  <p className="mt-5 rounded-xl bg-muted/50 p-3 text-center text-xs text-muted-foreground">
-                    يتم تجهيز رابط متجرك… ارجع خطوة واحفظ هوية متجرك أولًا.
-                  </p>
-                )}
-              </div>
-
-              <p className="mt-6 text-sm font-bold">جرّب هذه الأشياء:</p>
-              <ul className="mt-3 space-y-2">
-                {[
-                  "تصفّح منتجاتك وتأكد من الصور والأسعار",
-                  "تحدّث مع المساعد كأنك عميل واسأله عن منتج",
-                  "جرّب خطوات الطلب حتى النهاية",
-                ].map((t) => (
-                  <li key={t} className="flex items-start gap-3 rounded-xl border border-border bg-card p-3 text-sm">
-                    <span className="mt-0.5 grid h-5 w-5 shrink-0 place-items-center rounded-full bg-dashboard-green-soft text-dashboard-green">
-                      <Check className="h-3 w-3" />
-                    </span>
-                    {t}
-                  </li>
-                ))}
-              </ul>
+              <DemoStore name={name} logoUrl={logoUrl} />
 
               <p className="mt-5 flex items-center gap-2 text-xs text-muted-foreground">
                 <ShieldCheck className="h-4 w-4 shrink-0 text-dashboard-green" />
-                خذ وقتك. يمكنك تعديل أي شيء ثم العودة للتجربة مرة أخرى.
+                المنتجات والطلب هنا للتوضيح فقط، ولن تظهر لعملائك.
               </p>
 
-              <StepNav onBack={() => setStep(2)} onNext={() => setStep(4)} nextLabel={tried ? "انتهيت من التجربة" : "متابعة"} />
+              <StepNav onBack={() => setStep(2)} onNext={() => setStep(4)} nextLabel="انتهيت من المعاينة" />
             </section>
           )}
 
@@ -308,7 +269,7 @@ function WelcomePage() {
                       <span className="text-sm text-muted-foreground"><span className="text-2xl font-extrabold text-foreground">299</span> ج</span>
                     </div>
                     <ul className="mt-4 space-y-2 text-sm">
-                      {["استقبال الطلبات من عملائك", "مساعد يرد على عملائك تلقائيًا", "إدارة المنتجات والشحن والدفع"].map((t) => (
+                      {["استقبال الطلبات من عملائك", "متابعة الطلبات وحالتها أولًا بأول", "إدارة المنتجات والشحن والدفع"].map((t) => (
                         <li key={t} className="flex items-center gap-2">
                           <Check className="h-4 w-4 shrink-0 text-dashboard-green" /> {t}
                         </li>
