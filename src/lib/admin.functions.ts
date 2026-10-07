@@ -14,6 +14,7 @@ export interface AdminMerchant {
   lastSignInAt: string | null;
   restricted: boolean;
   subscribed: boolean;
+  activationRequestedAt: string | null;
 }
 
 async function adminSessionConfig() {
@@ -106,6 +107,8 @@ export const listMerchants = createServerFn({ method: "GET" }).handler(
           lastSignInAt: u.last_sign_in_at ?? null,
           restricted: !!banned && new Date(banned).getTime() > Date.now(),
           subscribed: u.app_metadata?.subscribed === true,
+          activationRequestedAt:
+            typeof u.app_metadata?.activation_requested_at === "string" ? u.app_metadata.activation_requested_at : null,
         });
       }
       if (data.users.length < 200) break;
