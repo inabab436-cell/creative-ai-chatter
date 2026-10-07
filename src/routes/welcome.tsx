@@ -2,8 +2,8 @@ import { useEffect, useRef, useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import {
-  ArrowLeft, ArrowRight, Check, CreditCard, ImagePlus, Loader2,
-  Package, PartyPopper, Store, Truck,
+  ArrowLeft, ArrowRight, Check, CreditCard, ExternalLink, Eye, ImagePlus, Loader2,
+  Package, PartyPopper, Rocket, ShieldCheck, Store, Truck,
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -13,6 +13,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { completeSetup } from "@/lib/auth.functions";
 import { getSiteState, updateWebsiteIdentity, uploadWebsiteLogo } from "@/lib/website.functions";
+import { getActivationStatus, requestActivation, type ActivationStatus } from "@/lib/activation.functions";
 import { ONBOARDING_DONE_KEY } from "@/lib/onboarding";
 
 export const Route = createFileRoute("/welcome")({
@@ -29,7 +30,7 @@ export const Route = createFileRoute("/welcome")({
   component: WelcomePage,
 });
 
-const STEPS = ["أهلاً بك", "هوية متجرك", "أساسيات البيع", "جاهز"];
+const STEPS = ["أهلاً بك", "هوية متجرك", "أساسيات البيع", "جرّب متجرك", "فعّل متجرك"];
 
 function fileToBase64(file: File): Promise<string> {
   return new Promise((res, rej) => {
@@ -58,6 +59,10 @@ function WelcomePage() {
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
+  const [tried, setTried] = useState(false);
+  const [activation, setActivation] = useState<ActivationStatus | null>(null);
+  const loadActivation = useServerFn(getActivationStatus);
+  const sendActivation = useServerFn(requestActivation);
 
   useEffect(() => {
     loadSite()
@@ -68,7 +73,20 @@ function WelcomePage() {
         setPublicUrl(s.public_url);
       })
       .catch(() => {});
-  }, [loadSite]);
+    loadActivation().then(setActivation).catch(() => {});
+  }, [loadSite, loadActivation]);
+
+  const activate = async () => {
+    setBusy(true);
+    setError(null);
+    try {
+      setActivation(await sendActivation());
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "تعذّر إرسال طلب التفعيل.");
+    } finally {
+      setBusy(false);
+    }
+  };
 
   const finish = async () => {
     setBusy(true);
@@ -112,7 +130,7 @@ function WelcomePage() {
           <div className="flex items-center gap-2">
             <CupaiLogo markClassName="h-6 w-6" textClassName="text-sm font-bold" />
           </div>
-          {step < 3 ? (
+          {step < 4 ? (
             <button type="button" onClick={finish} disabled={busy} className="text-xs font-semibold text-muted-foreground hover:text-foreground">
               تخطَّ الآن
             </button>
@@ -202,28 +220,124 @@ function WelcomePage() {
                 <Task to="/shipping" n={2} icon={<Truck className="h-5 w-5" />} tone="bg-dashboard-blue-soft text-dashboard-blue" title="حدّد مناطق الشحن" text="أين توصّل وكم التكلفة" />
                 <Task to="/settings/payment-methods" n={3} icon={<CreditCard className="h-5 w-5" />} tone="bg-dashboard-rose-soft text-dashboard-rose" title="فعّل طرق الدفع" text="كيف تستلم أموالك من العملاء" />
               </div>
-              <StepNav onBack={() => setStep(1)} onNext={() => setStep(3)} nextLabel="متابعة" />
+              <StepNav onBack={() => setStep(1)} onNext={() => setStep(3)} nextLabel="عاين متجرك" />
             </section>
           )}
 
           {step === 3 && (
+            <section>
+              <h1 className="text-xl font-extrabold">جرّب متجرك بنفسك</h1>
+              <p className="mt-1 text-sm text-muted-foreground">
+                شاهد متجرك تمامًا كما سيراه عملاؤك، وجرّب كل شيء بحرية. لن تدفع أي شيء الآن.
+              </p>
+
+              <div className="mt-6 rounded-2xl border border-border bg-card p-5 shadow-card">
+                <div className="flex items-center gap-4">
+                  <span className="grid h-14 w-14 shrink-0 place-items-center overflow-hidden rounded-2xl bg-primary/10 text-primary">
+                    {logoUrl ? <img src={logoUrl} alt="" className="h-full w-full object-cover" /> : <Store className="h-7 w-7" />}
+                  </span>
+                  <div className="min-w-0">
+                    <p className="truncate text-base font-bold">{name || "متجرك"}</p>
+                    <p className="mt-0.5 inline-flex items-center gap-1.5 rounded-full bg-dashboard-amber-soft px-2 py-0.5 text-[11px] font-semibold text-dashboard-amber">
+                      <Eye className="h-3 w-3" /> وضع المعاينة
+                    </p>
+                  </div>
+                </div>
+                {publicUrl ? (
+                  <Button asChild size="lg" className="mt-5 w-full">
+                    <a href={publicUrl} target="_blank" rel="noreferrer" onClick={() => setTried(true)}>
+                      افتح متجرك وجرّبه <ExternalLink className="mr-1 h-4 w-4" />
+                    </a>
+                  </Button>
+                ) : (
+                  <p className="mt-5 rounded-xl bg-muted/50 p-3 text-center text-xs text-muted-foreground">
+                    يتم تجهيز رابط متجرك… ارجع خطوة واحفظ هوية متجرك أولًا.
+                  </p>
+                )}
+              </div>
+
+              <p className="mt-6 text-sm font-bold">جرّب هذه الأشياء:</p>
+              <ul className="mt-3 space-y-2">
+                {[
+                  "تصفّح منتجاتك وتأكد من الصور والأسعار",
+                  "تحدّث مع المساعد كأنك عميل واسأله عن منتج",
+                  "جرّب خطوات الطلب حتى النهاية",
+                ].map((t) => (
+                  <li key={t} className="flex items-start gap-3 rounded-xl border border-border bg-card p-3 text-sm">
+                    <span className="mt-0.5 grid h-5 w-5 shrink-0 place-items-center rounded-full bg-dashboard-green-soft text-dashboard-green">
+                      <Check className="h-3 w-3" />
+                    </span>
+                    {t}
+                  </li>
+                ))}
+              </ul>
+
+              <p className="mt-5 flex items-center gap-2 text-xs text-muted-foreground">
+                <ShieldCheck className="h-4 w-4 shrink-0 text-dashboard-green" />
+                خذ وقتك. يمكنك تعديل أي شيء ثم العودة للتجربة مرة أخرى.
+              </p>
+
+              <StepNav onBack={() => setStep(2)} onNext={() => setStep(4)} nextLabel={tried ? "انتهيت من التجربة" : "متابعة"} />
+            </section>
+          )}
+
+          {step === 4 && (
             <section className="text-center">
               <div className="mx-auto grid h-20 w-20 place-items-center rounded-full bg-dashboard-green-soft text-dashboard-green">
                 <PartyPopper className="h-10 w-10" />
               </div>
               <h1 className="mt-5 text-2xl font-extrabold sm:text-3xl">متجرك جاهز{name ? `، ${name}` : ""}!</h1>
-              <p className="mx-auto mt-3 max-w-md text-sm leading-relaxed text-muted-foreground">
-                كل شيء في مكانه. من لوحة التحكم تتابع طلباتك ومحادثاتك وتكمل أي إعداد متبقٍ.
-              </p>
-              {publicUrl ? (
-                <a href={publicUrl} target="_blank" rel="noreferrer" className="mx-auto mt-5 inline-flex items-center gap-2 rounded-full border border-border bg-card px-4 py-2 text-sm font-semibold text-primary shadow-card hover:border-primary/40">
-                  <Store className="h-4 w-4" /> شاهد متجرك
-                </a>
-              ) : null}
-              <div className="mt-8">
-                <Button size="lg" className="w-full sm:w-auto sm:px-10" onClick={finish} disabled={busy}>
-                  {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <>الذهاب إلى لوحة التحكم <ArrowLeft className="mr-1 h-4 w-4" /></>}
-                </Button>
+
+              {activation?.subscribed ? (
+                <p className="mx-auto mt-3 max-w-md text-sm leading-relaxed text-muted-foreground">
+                  متجرك مفعّل ويستقبل الطلبات. تابع طلباتك ومحادثاتك من لوحة التحكم.
+                </p>
+              ) : activation?.requestedAt ? (
+                <div className="mx-auto mt-5 max-w-md rounded-2xl border border-dashboard-green/30 bg-dashboard-green-soft p-4 text-sm leading-relaxed">
+                  <p className="font-bold text-dashboard-green">تم استلام طلب التفعيل ✓</p>
+                  <p className="mt-1 text-muted-foreground">سيتواصل معك فريقنا قريبًا لإتمام الدفع وتفعيل متجرك.</p>
+                </div>
+              ) : (
+                <>
+                  <p className="mx-auto mt-3 max-w-md text-sm leading-relaxed text-muted-foreground">
+                    شاهدت متجرك وجرّبته. خطوة أخيرة: فعّل متجرك ليبدأ عملاؤك في الطلب منه.
+                  </p>
+                  <div className="mx-auto mt-6 max-w-md rounded-2xl border border-border bg-card p-5 text-right shadow-card">
+                    <div className="flex items-baseline justify-between">
+                      <span className="text-sm font-bold">باقة ابدأ فورًا</span>
+                      <span className="text-sm text-muted-foreground"><span className="text-2xl font-extrabold text-foreground">299</span> ج</span>
+                    </div>
+                    <ul className="mt-4 space-y-2 text-sm">
+                      {["استقبال الطلبات من عملائك", "مساعد يرد على عملائك تلقائيًا", "إدارة المنتجات والشحن والدفع"].map((t) => (
+                        <li key={t} className="flex items-center gap-2">
+                          <Check className="h-4 w-4 shrink-0 text-dashboard-green" /> {t}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                  {error ? <p className="mt-4 text-sm font-medium text-destructive">{error}</p> : null}
+                  <Button size="lg" className="mt-6 w-full sm:w-auto sm:px-10" onClick={activate} disabled={busy}>
+                    {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <><Rocket className="ml-1 h-4 w-4" /> فعّل متجرك الآن بـ 299ج فقط</>}
+                  </Button>
+                  <p className="mt-2 text-xs text-muted-foreground">متجرك وكل ما أضفته محفوظ — لن تفقد شيئًا.</p>
+                </>
+              )}
+
+              <div className="mt-6 flex flex-col items-center gap-2">
+                {activation?.subscribed || activation?.requestedAt ? (
+                  <Button size="lg" className="w-full sm:w-auto sm:px-10" onClick={finish} disabled={busy}>
+                    الذهاب إلى لوحة التحكم <ArrowLeft className="mr-1 h-4 w-4" />
+                  </Button>
+                ) : (
+                  <>
+                    <button type="button" onClick={() => setStep(3)} className="text-xs font-semibold text-primary hover:underline">
+                      أريد التجربة مرة أخرى
+                    </button>
+                    <button type="button" onClick={finish} disabled={busy} className="text-xs font-semibold text-muted-foreground hover:text-foreground">
+                      لاحقًا، اذهب إلى لوحة التحكم
+                    </button>
+                  </>
+                )}
               </div>
             </section>
           )}
@@ -240,7 +354,7 @@ function Progress({ step }: { step: number }) {
         <span className="font-bold text-primary">{STEPS[step]}</span>
         <span className="text-muted-foreground">الخطوة {step + 1} من {STEPS.length}</span>
       </div>
-      <div className="mt-2 grid grid-cols-4 gap-1.5" aria-hidden>
+      <div className="mt-2 grid grid-cols-5 gap-1.5" aria-hidden>
         {STEPS.map((s, i) => (
           <span key={s} className={`h-1.5 rounded-full transition-colors duration-500 ${i <= step ? "bg-primary" : "bg-muted"}`} />
         ))}
